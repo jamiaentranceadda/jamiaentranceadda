@@ -1,3 +1,4 @@
+
 var S=JSON.parse(document.getElementById('state').textContent),owner=false,wantAdmin=false,filt='all',tab='pages',pi=0,rt='';
 var BASE=/github\.io$/.test(location.hostname)?'/'+location.pathname.split('/')[1]+'/':'/';
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
@@ -21,8 +22,157 @@ else if(f.k==='page'){t=f.g.st||(r===''?S.siteTitle:f.g.t);d=f.g.sd||S.siteDesc}
 t=t||S.siteTitle;d=d||S.siteDesc;if(r!==''&&t.indexOf('Jamia Entrance Adda')<0)t+=' | Jamia Entrance Adda';
 if(r==='')ld={'@context':'https://schema.org','@type':'EducationalOrganization',name:'Jamia Entrance Adda',url:S.domain,telephone:S.phone1,email:S.email,address:S.address};
 return{t:t,d:d,type:type,og:og,ld:ld}}
+function nav(){return S.pages.filter(function(p){return p.nav!=='n'}).map(function(p){return[p.slug,p.t]})}
+function lk(l,txt,cls){l=String(l||'').trim();if(!l)return '';
+if(/^(https?:|\/\/)/.test(l))return '<a class="'+cls+'" href="'+esc(l)+'" target="_blank" rel="noopener">'+esc(txt)+'</a>';
+if(/^(mailto:|tel:)/.test(l))return '<a class="'+cls+'" href="'+esc(l)+'">'+esc(txt)+'</a>';
+if(l.charAt(0)==='#')return '<a class="'+cls+'" href="'+esc(l)+'" data-s="'+esc(l.slice(1))+'">'+esc(txt)+'</a>';
+var r=l.replace(/^\/+|\/+$/g,'');return '<a class="'+cls+'" href="'+U(r)+'" data-r="'+esc(r)+'">'+esc(txt)+'</a>'}
+function L(r,txt,cls){return '<a href="'+U(r)+'" data-r="'+esc(r)+'" class="'+(cls||'')+'">'+txt+'</a>'}
+function ph(t){return '<div class="ph">'+(t.p?'<img alt="'+esc(t.n)+'" src="'+esc(im(t.p))+'">':esc((t.n||'?').charAt(0)))+'</div>'}
+function courseCard(c){return '<div class="card"><h3>'+esc(c.n)+'</h3><p>'+esc(c.d)+'</p><a class="go" href="#enquire" data-s="enquire">Enquire</a></div>'}
+function postCard(p){return '<a class="card bc" style="text-decoration:none;display:block;color:inherit" href="'+U('blog/'+p.slug)+'" data-r="blog/'+esc(p.slug)+'">'+(p.cover?'<img class="cover" alt="" src="'+esc(im(p.cover))+'">':'')+'<div class="meta">'+esc(p.cat)+' | '+esc(p.date)+'</div><h3>'+esc(p.t)+'</h3><p>'+esc(String(p.body).replace(/## /g,'').slice(0,110))+'...</p></a>'}
+function head(s,top){var tg=top?'h1':'h2';return (s.t?'<div class="eyebrow">'+esc(s.t)+'</div>':'')+(s.h?'<'+tg+'>'+esc(s.h)+'</'+tg+'>':'')+(s.d?'<p class="sub">'+esc(s.d)+'</p>':'')}
+function secHtml(s,i,top){var cl=(i%2?'alt':'')+(top?' first':''),w=function(x){return '<section class="'+cl+'"><div class="wrap">'+x+'</div></section>'},hd=head(s,top),btn=s.link?'<p style="margin-top:22px">'+lk(s.link,s.linkText||'Learn more','btn ghost')+'</p>':'',it=s.items||[];
+switch(s.type){
+case 'hero':var tg=String(s.tags||'').split(',').map(function(x){return x.trim()}).filter(Boolean);return '<div class="hero"><div class="wrap'+(it.length?'':' one')+'"><div>'+(s.t?'<div class="eyebrow">'+esc(s.t)+'</div>':'')+'<h1>'+esc(s.h)+'</h1><p>'+esc(s.d)+'</p><div class="row">'+lk(s.link,s.linkText||'Learn more','btn')+lk(s.link2,s.linkText2||'More','btn ghost')+'</div>'+(tg.length?'<div class="trust">'+tg.map(function(x){return '<span>'+esc(x)+'</span>'}).join('')+'</div>':'')+'</div>'+(it.length?'<div class="plan"><ul>'+it.map(function(x){return '<li><span>'+esc(x.h)+'</span><b>'+esc(x.d)+'</b></li>'}).join('')+'</ul></div>':'')+'</div></div>';
+case 'text':return w(hd+(s.b?'<div class="prose">'+prose(s.b)+'</div>':'')+(s.link?'<p style="margin-top:20px">'+lk(s.link,s.linkText||'Learn more','btn')+'</p>':''));
+case 'cards':return w(hd+'<div class="grid">'+it.map(function(x){return '<div class="card"><h3>'+esc(x.h)+'</h3><p>'+esc(x.d)+'</p>'+lk(x.link,x.linkText||'Open','go')+'</div>'}).join('')+'</div>'+btn);
+case 'courses':var lim=+s.limit||0,cs=S.courses.filter(function(c){return lim||filt==='all'||c.c===filt});if(lim)cs=cs.slice(0,lim);
+var chips=lim?'':'<div class="chips">'+[['all','All'],['ug','Undergraduate'],['pg','Postgraduate'],['sc','School'],['bk','Books']].map(function(x){return '<button class="chip" data-f="'+x[0]+'" aria-pressed="'+(filt===x[0])+'">'+x[1]+'</button>'}).join('')+'</div>';
+return w(hd+chips+'<div class="grid">'+cs.map(courseCard).join('')+'</div>'+btn);
+case 'toppers':if(s.mode==='grid')return w(hd+'<div class="grid">'+S.toppers.map(function(t){return '<div class="tc tm" style="width:auto">'+ph(t)+'<div class="t"><b>'+esc(t.n)+'</b><span>'+esc(t.r)+'</span></div></div>'}).join('')+'</div>'+btn);
+var tc=S.toppers.map(function(t){return '<div class="tc">'+ph(t)+'<div class="t"><b>'+esc(t.n)+'</b><span>'+esc(t.r)+'</span></div></div>'}).join(''),half='';if(S.toppers.length){while(half.split('class="tc"').length<8)half+=tc}
+return '<section class="'+cl+'"><div class="wrap">'+hd+'</div><div class="top"><div class="track">'+half+half+'</div></div></section>';
+case 'team':return w(hd+'<div class="grid">'+S.team.map(function(t){return '<div class="tc tm" style="width:auto">'+ph(t)+'<div class="t"><b>'+esc(t.n)+'</b><span>'+esc(t.role)+'</span><p style="font-size:14.5px;color:var(--mute);margin:6px 0 0">'+esc(t.bio)+'</p></div></div>'}).join('')+'</div>'+btn);
+case 'posts':var lm=+s.limit||0,ps=lm?S.posts.slice(0,lm):S.posts;return w(hd+'<div class="grid">'+(ps.map(postCard).join('')||'<p>No posts yet.</p>')+'</div>'+btn);
+case 'faq':return w(hd+S.faq.map(function(q){return '<details><summary>'+esc(q.q)+'</summary><p>'+esc(q.a)+'</p></details>'}).join('')+btn);
+case 'cta':return w('<div class="cta">'+hd+(s.link?'<p>'+lk(s.link,s.linkText||'Get started','btn')+'</p>':'')+'</div>')}
+return ''}
+function pageHtml(r){var f=find(r);
+if(f.k==='page')return f.g.sections.map(function(s,i){return secHtml(s,i,i===0&&r!==''&&s.type!=='hero')}).join('');
+if(f.k==='post'){var p=f.p;return '<div class="wrap pg"><p>'+L('blog','Back to blog','btn ghost sm')+'</p><div style="color:var(--brand);font-weight:600">'+esc(p.cat)+' | '+esc(p.date)+'</div><h1>'+esc(p.t)+'</h1>'+(p.cover?'<img class="cover" style="margin-bottom:24px" alt="" src="'+esc(im(p.cover))+'">':'')+'<div class="prose">'+prose(p.body)+'</div></div>'}
+return '<div class="wrap pg"><h1>Page not found</h1><p class="sub">This page does not exist.</p><p>'+L('','Go to home','btn')+'</p></div>'}
+function soc(){return (S.social||[]).filter(function(x){return x.u}).map(function(x){return '<a href="'+esc(x.u)+'" target="_blank" rel="noopener">'+esc(x.n)+'</a>'}).join('')}
+function shell(r){var wa='https://wa.me/'+esc(S.wa);
+return '<div class="bar">'+esc(S.banner)+'</div><header><div class="wrap">'+L('',(S.logo?'<img alt="" src="'+esc(im(S.logo))+'">':'<i>J</i>')+'Jamia Entrance Adda','logo')+'<button class="btn sm" data-login="1">Login / Register</button></div></header><nav>'+nav().map(function(n){return L(n[0],esc(n[1]),r===n[0]?'on':'')}).join('')+'</nav><main>'+pageHtml(r)
++'<section id="contact" class="alt"><div class="wrap two"><div id="enquire">'+head({t:S.contactT,h:S.contactH,d:S.contactD})+'<form id="f"><input id="n" placeholder="Your name" required><input id="p" placeholder="Phone number" inputmode="tel" required><select id="c">'+S.courses.map(function(c){return '<option>'+esc(c.n)+'</option>'}).join('')+'</select><button class="btn" type="submit">Send on WhatsApp</button></form></div><div class="info"><h2>Contact us</h2><p class="sub">We reply fast.</p><p>'+esc(S.address)+'</p><p><a href="'+tel(S.phone1)+'">'+esc(S.phone1)+'</a><br><a href="'+tel(S.phone2)+'">'+esc(S.phone2)+'</a></p><p><a href="mailto:'+esc(S.email)+'">'+esc(S.email)+'</a></p><div class="soc">'+soc()+'</div></div></div></section></main><footer><div class="wrap"><div class="soc" style="margin:0 0 12px">'+soc()+'</div>'+esc(S.footer)+'</div></footer><a class="btn wa" href="'+wa+'?text=Hi%2C%20I%20want%20course%20details" target="_blank" rel="noopener">WhatsApp us</a>'
++'<div class="modal" id="lg"><div class="mbox"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="font-size:24px;margin:0">Student login</h2><button class="btn ghost sm" id="lgx">Close</button></div><p class="sub" style="margin:10px 0">Already enrolled? Log in to your classes and tests.</p><a class="btn" style="display:block;text-align:center" href="'+esc(S.loginUrl)+'" target="_blank" rel="noopener">Login to my classes</a><hr style="border:0;border-top:1px solid var(--line);margin:18px 0"><b>New here? Register</b><form id="lf" style="margin-top:10px"><input id="ln" placeholder="Your name" required><input id="lp" placeholder="Mobile number" inputmode="tel" required><select id="lc">'+S.courses.map(function(c){return '<option>'+esc(c.n)+'</option>'}).join('')+'</select><button class="btn" type="submit">Register on WhatsApp</button></form></div></div>'}
+function go(r){rt=r;try{history.pushState(null,'',U(r)+(wantAdmin?'?admin':''))}catch(e){}site();scrollTo(0,0)}
+function site(keep){var y=scrollY;$('root').innerHTML=shell(rt)+(owner?'<button class="btn adm" id="admbtn">Edit site</button><div id="sheet"></div>':'');
+var m=metaFor(rt);document.title=m.t;
+document.querySelectorAll('[data-r]').forEach(function(a){a.onclick=function(e){e.preventDefault();go(a.dataset.r)}});
+document.querySelectorAll('[data-s]').forEach(function(a){a.onclick=function(e){e.preventDefault();var t=$(a.dataset.s);if(t)t.scrollIntoView({behavior:'smooth'})}});
+document.querySelectorAll('.chip').forEach(function(b){b.onclick=function(){filt=b.dataset.f;site(true)}});
+document.querySelectorAll('[data-login]').forEach(function(b){b.onclick=function(){$('lg').className='modal on'}});
+$('lgx').onclick=function(){$('lg').className='modal'};
+$('lf').onsubmit=function(e){e.preventDefault();window.open('https://wa.me/'+S.wa+'?text='+encodeURIComponent('Registration request. Name: '+$('ln').value+'. Mobile: '+$('lp').value+'. Course: '+$('lc').value),'_blank')};
+$('f').onsubmit=function(e){e.preventDefault();window.open('https://wa.me/'+S.wa+'?text='+encodeURIComponent('Hi, I am '+$('n').value+'. Phone: '+$('p').value+'. I am interested in '+$('c').value+'. Please call me.'),'_blank')};
+if(owner)$('admbtn').onclick=function(){$('sheet').className='on';panel()};
+if(keep)scrollTo(0,y)}
+/* ---------- admin ---------- */
+function F(k,l,v,a){return '<label>'+l+(a?'<textarea rows="'+a+'" data-k="'+k+'">'+esc(v)+'</textarea>':'<input data-k="'+k+'" value="'+esc(v)+'">')+'</label>'}
+var LISTS={
+posts:{add:'blog post',nw:function(){return{slug:'',t:'',cat:'Updates',date:new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}),cover:'',body:'',st:'',sd:''}},f:[['t','Title'],['slug','Post address (slug), auto from title if empty'],['cat','Category'],['date','Date'],['body','Write your post (blank line = new paragraph, ## = heading)',10],['st','SEO title'],['sd','SEO description',2]],ph:[800,450],pk:'cover'},
+redirects:{add:'redirect',nw:{from:'',to:''},f:[['from','Old address, e.g. old-page'],['to','Send visitors to (page name or full link)']]},
+toppers:{add:'achiever',nw:{n:'',r:'',p:''},f:[['n','Name'],['r','Rank, e.g. Rank 01 Geography']],ph:[420,540]},
+team:{add:'teacher',nw:{n:'',role:'',bio:'',p:''},f:[['n','Name'],['role','Role / subject'],['bio','Short bio',2]],ph:[420,420]},
+courses:{add:'course',nw:{n:'New course',d:'',c:'ug'},f:[['n','Course name'],['d','Description',2],['c','Type']],sel:{c:[['ug','Undergraduate'],['pg','Postgraduate'],['sc','School'],['bk','Books']]}},
+faq:{add:'question',nw:{q:'',a:''},f:[['q','Question'],['a','Answer',2]]},
+social:{add:'social account',nw:{n:'',u:''},f:[['n','Name, e.g. Facebook'],['u','Profile link (https://...)']]}};
+function listUI(k){var Q=LISTS[k],pk=Q.pk||'p';return '<button class="btn" data-add="'+k+'">+ Add '+Q.add+'</button>'+S[k].map(function(it,i){
+return '<div class="item">'+(Q.ph?'<div class="row">'+(it[pk]?'<img class="thumb" src="'+esc(im(it[pk]))+'">':'<div class="thumb"></div>')+'<label class="btn ghost sm" style="cursor:pointer;align-self:center">Choose photo<input type="file" accept="image/*" hidden data-ph="'+k+'" data-i="'+i+'"></label></div>':'')
++Q.f.map(function(f){var a='data-a="'+k+'" data-i="'+i+'" data-f="'+f[0]+'"';
+if(Q.sel&&Q.sel[f[0]])return '<select '+a+'>'+Q.sel[f[0]].map(function(o){return '<option value="'+o[0]+'"'+(it[f[0]]===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select>';
+return f[2]?'<label>'+f[1]+'<textarea rows="'+f[2]+'" '+a+'>'+esc(it[f[0]])+'</textarea></label>':'<input placeholder="'+f[1]+'" '+a+' value="'+esc(it[f[0]])+'">'}).join('')
++'<button class="btn red sm" data-del="'+k+'" data-i="'+i+'">Delete</button></div>'}).join('')}
+var TYPES=[['hero','Hero (big top banner)'],['text','Text'],['cards','Cards'],['courses','Courses list'],['toppers','Achievers'],['team','Team'],['posts','Blog posts'],['faq','FAQ'],['cta','Call-to-action banner']];
+function sI(a,i,k,v,ph,rows){var at='data-sec="'+i+'" data-f="'+k+'"';return rows?'<label>'+ph+'<textarea rows="'+rows+'" '+at+'>'+esc(v)+'</textarea></label>':'<input placeholder="'+ph+'" '+at+' value="'+esc(v)+'">'}
+function secUI(s,i,n){var t=s.type,h='<div class="item"><div class="row" style="justify-content:space-between;align-items:center"><b>'+(i+1)+'. '+esc((TYPES.filter(function(x){return x[0]===t})[0]||[0,t])[1])+'</b><span><button class="btn ghost sm" data-mv="'+i+'" data-d="-1">&uarr;</button> <button class="btn ghost sm" data-mv="'+i+'" data-d="1">&darr;</button> <button class="btn red sm" data-ds="'+i+'">Delete</button></span></div>';
+h+=sI(0,i,'t',s.t,'Small title (above heading)')+sI(0,i,'h',s.h,'Heading')+sI(0,i,'d',s.d,'Description',3);
+if(t==='text')h+=sI(0,i,'b',s.b,'Page text (blank line = paragraph, ## = heading)',8);
+if(t==='courses'||t==='posts')h+=sI(0,i,'limit',s.limit||'','How many to show (empty or 0 = all)');
+if(t==='toppers')h+='<select data-sec="'+i+'" data-f="mode"><option value="marquee"'+(s.mode!=='grid'?' selected':'')+'>Sliding strip</option><option value="grid"'+(s.mode==='grid'?' selected':'')+'>Grid</option></select>';
+if(t==='hero')h+=sI(0,i,'tags',s.tags,'Tags, comma separated (JMI, AMU, CUET)');
+if(t!=='courses'&&t!=='toppers'&&t!=='team'&&t!=='faq'&&t!=='posts'||true)h+=sI(0,i,'link',s.link,'Redirect link (page name like courses, #enquire, or full link)')+sI(0,i,'linkText',s.linkText,'Button text');
+if(t==='hero')h+=sI(0,i,'link2',s.link2,'Second button link')+sI(0,i,'linkText2',s.linkText2,'Second button text');
+if(t==='cards'||t==='hero'){h+='<b style="font-size:14px">'+(t==='hero'?'Side card lines (left text, right text)':'Cards')+'</b><button class="btn sm" data-ai="'+i+'">+ Add '+(t==='hero'?'line':'card')+'</button>';
+(s.items||[]).forEach(function(x,j){var at='data-sec="'+i+'" data-it="'+j+'"';h+='<div class="item"><input placeholder="Heading" '+at+' data-f="h" value="'+esc(x.h)+'"><textarea rows="2" placeholder="Description" '+at+' data-f="d">'+esc(x.d)+'</textarea>'+(t==='cards'?'<input placeholder="Redirect link" '+at+' data-f="link" value="'+esc(x.link)+'"><input placeholder="Button text" '+at+' data-f="linkText" value="'+esc(x.linkText)+'">':'')+'<button class="btn red sm" data-di="'+i+'" data-j="'+j+'">Remove</button></div>'})}
+return h+'</div>'}
+function panel(){var b='',g=S.pages[pi]||S.pages[0];
+if(tab==='basic')b=[['banner','Top banner'],['phone1','Phone 1'],['phone2','Phone 2'],['wa','WhatsApp number (91XXXXXXXXXX)'],['email','Email'],['address','Address'],['loginUrl','Student login link'],['contactT','Contact section: small title'],['contactH','Contact section: heading'],['footer','Footer text']].map(function(x){return F(x[0],x[1],S[x[0]])}).join('')+F('contactD','Contact section: description',S.contactD,2)+'<div class="item"><b>Admin passcode</b><button class="btn ghost sm" id="cpw">Change passcode</button></div>'+'<div class="item"><b>Logo</b>'+(S.logo?'<img style="height:60px;width:auto;object-fit:contain;align-self:start" src="'+esc(im(S.logo))+'">':'<p style="margin:0;color:var(--mute);font-size:14px">No logo yet.</p>')+'<label class="btn ghost sm" style="cursor:pointer">Choose logo<input type="file" accept="image/*" hidden id="lgo"></label>'+(S.logo?'<button class="btn red sm" id="lgd">Remove logo</button>':'')+'</div>';
+else if(tab==='pages'){b='<select id="ps">'+S.pages.map(function(p,i){return '<option value="'+i+'"'+(i===pi?' selected':'')+'>'+esc(p.t)+'</option>'}).join('')+'</select><div class="row"><button class="btn sm" id="np">+ New page</button>'+(g.slug!==''?'<button class="btn red sm" id="dp">Delete this page</button>':'')+'</div>'
++'<div class="item"><b>Page settings</b><input placeholder="Menu name" data-pg="t" value="'+esc(g.t)+'">'+(g.slug!==''?'<input placeholder="Page address (slug)" data-pg="slug" value="'+esc(g.slug)+'">':'')+'<select data-pg="nav"><option value="y"'+(g.nav!=='n'?' selected':'')+'>Show in menu</option><option value="n"'+(g.nav==='n'?' selected':'')+'>Hide from menu</option></select><input placeholder="SEO title" data-pg="st" value="'+esc(g.st)+'"><textarea rows="2" placeholder="SEO description" data-pg="sd">'+esc(g.sd)+'</textarea></div>'
++g.sections.map(function(s,i){return secUI(s,i)}).join('')+'<div class="item"><select id="ty">'+TYPES.map(function(x){return '<option value="'+x[0]+'">'+x[1]+'</option>'}).join('')+'</select><button class="btn" id="as">+ Add section</button></div>'}
+else if(tab==='seo'){b=F('domain','Website address (no slash at end)',S.domain)+F('siteTitle','Default title',S.siteTitle)+F('siteDesc','Default description',S.siteDesc,3)+'<div class="item"><b>Share image (WhatsApp / Facebook preview)</b>'+(S.ogImage?'<img class="cover" src="'+esc(im(S.ogImage))+'">':'')+'<label class="btn ghost sm" style="cursor:pointer">Choose image<input type="file" accept="image/*" hidden id="og"></label></div><p style="color:var(--mute);font-size:14px">Title up to 60 letters, description up to 155. Each page has its own SEO fields in Pages tab.</p>'}
+else if(tab==='github')b='<div class="item"><b>GitHub connection</b><input id="rp" placeholder="Repository, e.g. jamiaentranceadda/jamiaentranceadda" value="'+esc(localStorage.jea_repo||'')+'"><input id="tk" type="password" placeholder="GitHub token" value="'+esc(localStorage.jea_tok||'')+'"><button class="btn sm" id="sv">Save connection</button><p style="color:var(--mute);font-size:14px;margin:0">Token sirf is phone ke browser mein save hota hai. Kisi ko mat dena.</p></div>';
+else b=listUI(tab);
+var T=[['pages','Pages'],['posts','Blog'],['toppers','Achievers'],['team','Team'],['courses','Courses'],['faq','FAQ'],['social','Social'],['seo','SEO'],['redirects','Redirects'],['basic','Basic'],['github','GitHub']];
+$('sheet').innerHTML='<div class="pan"><div class="ph1"><b>Edit site</b><button class="btn ghost sm" id="cl">Close</button></div><div class="tabs">'+T.map(function(t){return '<button class="btn sm'+(tab===t[0]?'':' ghost')+'" data-t="'+t[0]+'">'+t[1]+'</button>'}).join('')+'</div><div class="body">'+b+'</div><div class="foot"><button class="btn" id="pub">Save and publish</button></div></div>';
+var P=$('sheet'),on=function(sel,fn){P.querySelectorAll(sel).forEach(fn)};
+$('cl').onclick=function(){P.className='';site(true)};
+on('[data-t]',function(x){x.onclick=function(){tab=x.dataset.t;panel()}});
+on('[data-k]',function(x){x.oninput=function(){S[x.dataset.k]=x.value}});
+on('[data-a]',function(x){x.oninput=function(){S[x.dataset.a][x.dataset.i][x.dataset.f]=x.value}});
+on('[data-pg]',function(x){x.oninput=x.onchange=function(){g[x.dataset.pg]=x.value}});
+on('[data-sec]',function(x){x.oninput=x.onchange=function(){var s=g.sections[x.dataset.sec];if(x.dataset.it!=null)s.items[x.dataset.it][x.dataset.f]=x.value;else s[x.dataset.f]=x.value}});
+on('[data-del]',function(x){x.onclick=function(){if(confirm('Delete this item?')){S[x.dataset.del].splice(+x.dataset.i,1);panel()}}});
+on('[data-add]',function(x){x.onclick=function(){var n=LISTS[x.dataset.add].nw;S[x.dataset.add].unshift(typeof n==='function'?n():JSON.parse(JSON.stringify(n)));panel()}});
+on('[data-ph]',function(x){x.onchange=function(){var f=x.files[0],Q=LISTS[x.dataset.ph];if(!f)return;shrink(f,Q.ph[0],Q.ph[1],function(u){S[x.dataset.ph][+x.dataset.i][Q.pk||'p']=u;panel()})}});
+on('[data-mv]',function(x){x.onclick=function(){var i=+x.dataset.mv,j=i+ +x.dataset.d,a=g.sections;if(j<0||j>=a.length)return;var t=a[i];a[i]=a[j];a[j]=t;panel()}});
+on('[data-ds]',function(x){x.onclick=function(){if(confirm('Delete this section?')){g.sections.splice(+x.dataset.ds,1);panel()}}});
+on('[data-ai]',function(x){x.onclick=function(){var s=g.sections[+x.dataset.ai];(s.items=s.items||[]).push({h:'',d:'',link:'',linkText:''});panel()}});
+on('[data-di]',function(x){x.onclick=function(){g.sections[+x.dataset.di].items.splice(+x.dataset.j,1);panel()}});
+if($('ps'))$('ps').onchange=function(){pi=+this.value;panel()};
+if($('np'))$('np').onclick=function(){S.pages.push({slug:'new-page',t:'New page',nav:'y',st:'',sd:'',sections:[{type:'text',t:'',h:'New page',d:'',b:'',link:'',linkText:''}]});pi=S.pages.length-1;panel()};
+if($('dp'))$('dp').onclick=function(){if(confirm('Delete this page?')){S.pages.splice(pi,1);pi=0;panel()}};
+if($('as'))$('as').onclick=function(){g.sections.push({type:$('ty').value,t:'',h:'New heading',d:'',b:'',link:'',linkText:'',items:[]});panel()};
+if($('cpw'))$('cpw').onclick=function(){P.className='';site(true);gate(true)};
+if($('lgo'))$('lgo').onchange=function(){var f=this.files[0];if(f)shrinkLogo(f,function(u){S.logo=u;panel()})};
+if($('lgd'))$('lgd').onclick=function(){S.logo='';panel()};
+if($('og'))$('og').onchange=function(){var f=this.files[0];if(f)shrink(f,1200,630,function(u){S.ogImage=u;panel()})};
+if($('sv'))$('sv').onclick=function(){localStorage.jea_repo=$('rp').value.trim();localStorage.jea_tok=$('tk').value.trim();toast('Saved')};
+$('pub').onclick=publish}
+function shrinkLogo(file,cb){var img=new Image(),r=new FileReader();r.onload=function(){img.onload=function(){var H=Math.min(120,img.height),W=Math.round(img.width*H/img.height),c=document.createElement('canvas');c.width=W;c.height=H;c.getContext('2d').drawImage(img,0,0,W,H);cb(c.toDataURL('image/png'))};img.src=r.result};r.readAsDataURL(file)}
+function shrink(file,W,H,cb){var img=new Image(),r=new FileReader();r.onload=function(){img.onload=function(){var c=document.createElement('canvas');c.width=W;c.height=H;var s=Math.max(W/img.width,H/img.height),w=img.width*s,h=img.height*s;c.getContext('2d').drawImage(img,(W-w)/2,(H-h)/3,w,h);cb(c.toDataURL('image/jpeg',.82))};img.src=r.result};r.readAsDataURL(file)}
+function docHtml(r){var adm=r==='admin',rr=adm?'':(r||''),m=metaFor(rr),can=S.domain.replace(/\/+$/,'')+'/'+(rr?rr+'/':''),h='<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n<title>'+esc(m.t)+'</title>\n<meta name="description" content="'+esc(m.d)+'">\n';
+h+=(adm||r===null)?'<meta name="robots" content="noindex">\n':'<link rel="canonical" href="'+esc(can)+'">\n<meta property="og:type" content="'+m.type+'">\n<meta property="og:title" content="'+esc(m.t)+'">\n<meta property="og:description" content="'+esc(m.d)+'">\n<meta property="og:url" content="'+esc(can)+'">\n'+(m.og?'<meta property="og:image" content="'+esc(abs(m.og))+'">\n':'')+'<meta name="twitter:card" content="summary_large_image">\n'+(m.ld?'<script type="application/ld+json">'+JSON.stringify(m.ld).replace(/</g,'\\u003c')+'<\/script>\n':'');
+return h+(S.logo?'<link rel="icon" href="'+esc(im(S.logo))+'">\n':'')+'<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;800&family=Hind:wght@400;500;600&display=swap">\n<link rel="stylesheet" href="'+BASE+'style.css">\n</head>\n<body>\n<div id="root">'+shell(r===null?'404x':rr)+'</div>\n<div id="toast" role="status"></div>\n<script type="application/json" id="state">'+JSON.stringify(S).replace(/</g,'\\u003c')+'<\/script>\n'+(r===null?'':'<script>window.ROUTE='+JSON.stringify(r)+'<\/script>\n')+'<script src="'+BASE+'app.js"><\/script>\n</body>\n</html>'}
+function walk(o,bl){for(var k in o){var v=o[k];if(typeof v==='string'&&v.indexOf('data:image/')===0){var p='img/'+Date.now().toString(36)+bl.length+(v.indexOf('image/png')>0?'.png':'.jpg');bl.push({path:p,b64:v.split(',')[1]});o[k]=p}else if(v&&typeof v==='object')walk(v,bl)}}
+async function src(id,url){var e=$(id);if(e)return e.textContent;return (await fetch(BASE+url+'?'+Date.now())).text()}
+async function publish(){var btn=$('pub');btn.disabled=true;btn.textContent='Publishing...';
+try{var REPO=localStorage.jea_repo,TOK=localStorage.jea_tok;
+if(!REPO||!TOK){tab='github';panel();toast('Pehle GitHub tab mein repo aur token daalo');return}
+var H={Authorization:'Bearer '+TOK,Accept:'application/vnd.github+json','Content-Type':'application/json'};
+async function gh(p,method,body){var r=await fetch('https://api.github.com/repos/'+REPO+p,{method:method||'GET',headers:H,body:body?JSON.stringify(body):undefined});if(!r.ok)throw new Error(r.status+' '+(await r.text()).slice(0,140));return r.json()}
+var ps={};S.pages.forEach(function(p,i){if(i===0||p.slug===''){p.slug='';return}var b=slug(p.slug||p.t)||'page',s=b,k=2;while(ps[s]||s==='blog'&&false||s==='admin')s=b+'-'+(k++);ps[s]=1;p.slug=s});var seen={};S.posts.forEach(function(p){var b=slug(p.slug||p.t)||'post',s=b,i=2;while(seen[s])s=b+'-'+(i++);seen[s]=1;p.slug=s});
+var bl=[],C=JSON.parse(JSON.stringify(S));walk(C,bl);var old=S;S=C;
+var js=await src('app-script','app.js'),css=await src('app-style','style.css');
+var routes=S.pages.map(function(p){return p.slug}).concat(S.posts.map(function(p){return 'blog/'+p.slug})),files=[];
+routes.forEach(function(r){files.push({path:r?r+'/index.html':'index.html',text:docHtml(r)})});
+files.push({path:'admin/index.html',text:docHtml('admin')},{path:'404.html',text:docHtml(null)},{path:'app.js',text:js},{path:'style.css',text:css});
+S.redirects.forEach(function(x){var f=String(x.from||'').toLowerCase().replace(/^https?:\/\/[^\/]+/,'').split('/').map(slug).filter(Boolean).join('/');if(!f||routes.indexOf(f)>-1||f==='admin'||!x.to)return;var to=String(x.to).trim(),a=/^http/.test(to)?to:S.domain.replace(/\/+$/,'')+'/'+to.replace(/^\/+|\/+$/g,'')+(to.replace(/^\/+|\/+$/g,'')?'/':'');
+files.push({path:f+'/index.html',text:'<!DOCTYPE html><html><head><meta charset="utf-8"><title>Redirecting</title><meta name="robots" content="noindex"><link rel="canonical" href="'+esc(a)+'"><meta http-equiv="refresh" content="0;url='+esc(a)+'"></head><body><a href="'+esc(a)+'">Click here</a><script>location.replace('+JSON.stringify(a)+')<\/script></body></html>'})});
+var d=new Date().toISOString().slice(0,10);
+files.push({path:'sitemap.xml',text:'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'+routes.map(function(r){return '<url><loc>'+esc(S.domain.replace(/\/+$/,'')+'/'+(r?r+'/':''))+'</loc><lastmod>'+d+'</lastmod></url>'}).join('\n')+'\n</urlset>'},{path:'robots.txt',text:'User-agent: *\nAllow: /\nDisallow: /admin/\nSitemap: '+S.domain.replace(/\/+$/,'')+'/sitemap.xml\n'});
+var info=await gh('');var br=info.default_branch,ref=await gh('/git/ref/heads/'+br),cm=await gh('/git/commits/'+ref.object.sha),all=files.map(function(f){return{path:f.path,body:{content:f.text,encoding:'utf-8'}}}).concat(bl.map(function(b){return{path:b.path,body:{content:b.b64,encoding:'base64'}}})),tree=[];
+for(var i=0;i<all.length;i+=6){await Promise.all(all.slice(i,i+6).map(async function(a){var r=await gh('/git/blobs','POST',a.body);tree.push({path:a.path,mode:'100644',type:'blob',sha:r.sha})}))}
+var t=await gh('/git/trees','POST',{base_tree:cm.tree.sha,tree:tree}),c=await gh('/git/commits','POST',{message:'Update site from admin',tree:t.sha,parents:[ref.object.sha]});
+await gh('/git/refs/heads/'+br,'PATCH',{sha:c.sha});
+toast('Published! Site 1-2 minute mein update hogi');btn.textContent='Save and publish';btn.disabled=false}
+catch(e){if(typeof old!=='undefined')S=old;toast('Publish nahi hua: '+e.message);btn.textContent='Save and publish';btn.disabled=false}}
 
-var pq={},saved=null;
-function richHtml(b){return /^\s*</.test(String(b||''))?clean(b):prose(b)}
-function bodyHtml(b){return richHtml(b)}
-function clean(h){if(typeof DOMParser==='undefined')return '';var d=new DOMParser().parseFromString('<body>'+h+'</body>','text/html');
+async function hsh(s){var b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('jea|'+s));return Array.prototype.map.call(new Uint8Array(b),function(x){return ('0'+x.toString(16)).slice(-2)}).join('')}
+function gate(setNew){var first=setNew||!S.adminHash,o=document.createElement('div');o.className='modal on';o.id='gt';
+o.innerHTML='<div class="mbox"><h2 style="font-size:24px;margin:0 0 8px">Admin</h2><p class="sub" style="margin:0 0 12px">'+(first?'Set a secret passcode (minimum 8 characters). Only you should know it.':'Enter your admin passcode.')+'</p><div style="display:grid;gap:10px"><input id="g1" type="password" placeholder="Passcode" autocomplete="off">'+(first?'<input id="g2" type="password" placeholder="Confirm passcode" autocomplete="off">':'')+'<button class="btn" id="gb">Continue</button><button class="btn ghost" id="gc">Cancel</button></div></div>';
+document.body.appendChild(o);
+document.getElementById('gc').onclick=function(){o.remove()};
+document.getElementById('gb').onclick=async function(){var a=$('g1').value;
+if(first){if(a.length<8){toast('Passcode kam se kam 8 akshar ka rakho');return}if(a!==$('g2').value){toast('Dono passcode alag hain');return}S.adminHash=await hsh(a);toast('Passcode set. Save and publish karne par ye save hoga.')}
+else if(await hsh(a)!==S.adminHash){toast('Galat passcode');return}
+try{sessionStorage.jea_ok='1'}catch(e){}owner=true;o.remove();site(true)}}
+rt=getRoute();site();
+if(wantAdmin&&!owner){var ok=false;try{ok=sessionStorage.jea_ok==='1'&&!!S.adminHash}catch(e){}if(ok){owner=true;site(true)}else gate()}
+
+window.onpopstate=function(){rt=getRoute();site()};
+
