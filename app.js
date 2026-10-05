@@ -1,4 +1,3 @@
-
 var S=JSON.parse(document.getElementById('state').textContent),owner=false,wantAdmin=false,filt='all',tab='pages',pi=0,rt='';
 var BASE=/github\.io$/.test(location.hostname)?'/'+location.pathname.split('/')[1]+'/':'/';
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
@@ -22,6 +21,22 @@ else if(f.k==='page'){t=f.g.st||(r===''?S.siteTitle:f.g.t);d=f.g.sd||S.siteDesc}
 t=t||S.siteTitle;d=d||S.siteDesc;if(r!==''&&t.indexOf('Jamia Entrance Adda')<0)t+=' | Jamia Entrance Adda';
 if(r==='')ld={'@context':'https://schema.org','@type':'EducationalOrganization',name:'Jamia Entrance Adda',url:S.domain,telephone:S.phone1,email:S.email,address:S.address};
 return{t:t,d:d,type:type,og:og,ld:ld}}
+
+var pq={},saved=null;
+function richHtml(b){return /^\s*</.test(String(b||''))?clean(b):prose(b)}
+function bodyHtml(b){return richHtml(b)}
+function clean(h){if(typeof DOMParser==='undefined')return '';var d=new DOMParser().parseFromString('<body>'+h+'</body>','text/html');
+function W(n){var o='';n.childNodes.forEach(function(c){if(c.nodeType===3)o+=esc(c.nodeValue);else if(c.nodeType===1){var t=c.tagName,i=W(c);
+if(t==='A'){var hr=(c.getAttribute('href')||'').trim();if(!hr||/^javascript:/i.test(hr))o+=i;else if(/^https:\/\/internal\.link\//i.test(hr)){var r=hr.replace(/^https:\/\/internal\.link\//i,'').replace(/^\/+|\/+$/g,'');o+='<a href="'+U(r)+'" data-r="'+esc(r)+'">'+i+'</a>'}else if(/^(https?:|mailto:|tel:)/i.test(hr))o+='<a href="'+esc(hr)+'" target="_blank" rel="noopener">'+i+'</a>';else o+=i}
+else if(t==='B'||t==='STRONG')o+='<strong>'+i+'</strong>';else if(t==='I'||t==='EM')o+='<em>'+i+'</em>';else if(t==='U')o+='<u>'+i+'</u>';
+else if(t==='H1'||t==='H2')o+='<h2>'+i+'</h2>';else if(t==='H3'||t==='H4')o+='<h3>'+i+'</h3>';
+else if(t==='P'||t==='DIV')o+='<p>'+i+'</p>';else if(t==='UL'||t==='OL'||t==='LI'||t==='BLOCKQUOTE')o+='<'+t.toLowerCase()+'>'+i+'</'+t.toLowerCase()+'>';else if(t==='BR')o+='<br>';
+else if(!/^(SCRIPT|STYLE|IFRAME|OBJECT|EMBED)$/.test(t))o+=i}});return o}
+return W(d.body).replace(/<p>(<br>)?<\/p>/g,'')}
+function driveId(l){var m=String(l).match(/\/d\/([\w-]{10,})/)||String(l).match(/[?&]id=([\w-]{10,})/);return m?m[1]:''}
+function pdfInfo(l){var id=driveId(l);if(id)return{src:'https://drive.google.com/file/d/'+id+'/preview',open:'https://drive.google.com/file/d/'+id+'/view',dl:'https://drive.google.com/uc?export=download&id='+id};var u=im(l),a=/^http/.test(u)?u:location.origin+u;return{src:'https://docs.google.com/gview?embedded=true&url='+encodeURIComponent(a),open:u,dl:u}}
+function openPv(nd){var f=pdfInfo(nd.link);$('pvt').textContent=nd.n;$('pvf').src=f.src;$('pvo').href=f.open;$('pvd').href=f.dl;$('pv').className='modal on'}
+function ytId(u){var m=String(u||'').match(/(?:v=|youtu\.be\/|embed\/|live\/|shorts\/)([\w-]{11})/);return m?m[1]:''}
 function nav(){return S.pages.filter(function(p){return p.nav!=='n'}).map(function(p){return[p.slug,p.t]})}
 function lk(l,txt,cls){l=String(l||'').trim();if(!l)return '';
 if(/^(https?:|\/\/)/.test(l))return '<a class="'+cls+'" href="'+esc(l)+'" target="_blank" rel="noopener">'+esc(txt)+'</a>';
@@ -30,13 +45,13 @@ if(l.charAt(0)==='#')return '<a class="'+cls+'" href="'+esc(l)+'" data-s="'+esc(
 var r=l.replace(/^\/+|\/+$/g,'');return '<a class="'+cls+'" href="'+U(r)+'" data-r="'+esc(r)+'">'+esc(txt)+'</a>'}
 function L(r,txt,cls){return '<a href="'+U(r)+'" data-r="'+esc(r)+'" class="'+(cls||'')+'">'+txt+'</a>'}
 function ph(t){return '<div class="ph">'+(t.p?'<img alt="'+esc(t.n)+'" src="'+esc(im(t.p))+'">':esc((t.n||'?').charAt(0)))+'</div>'}
-function courseCard(c){return '<div class="card"><h3>'+esc(c.n)+'</h3><p>'+esc(c.d)+'</p><a class="go" href="#enquire" data-s="enquire">Enquire</a></div>'}
-function postCard(p){return '<a class="card bc" style="text-decoration:none;display:block;color:inherit" href="'+U('blog/'+p.slug)+'" data-r="blog/'+esc(p.slug)+'">'+(p.cover?'<img class="cover" alt="" src="'+esc(im(p.cover))+'">':'')+'<div class="meta">'+esc(p.cat)+' | '+esc(p.date)+'</div><h3>'+esc(p.t)+'</h3><p>'+esc(String(p.body).replace(/## /g,'').slice(0,110))+'...</p></a>'}
+function courseCard(c){return '<div class="card"><h3>'+esc(c.n)+'</h3><p>'+esc(c.d)+'</p><div class="row" style="margin-top:14px;align-items:center">'+lk(c.link,c.linkText||'Enroll now','btn sm')+'<a class="go" style="margin:0" href="#enquire" data-s="enquire">Enquire</a></div></div>'}
+function postCard(p){return '<a class="card bc" style="text-decoration:none;display:block;color:inherit" href="'+U('blog/'+p.slug)+'" data-r="blog/'+esc(p.slug)+'">'+(p.cover?'<img class="cover" alt="" src="'+esc(im(p.cover))+'">':'')+'<div class="meta">'+esc(p.cat)+' | '+esc(p.date)+'</div><h3>'+esc(p.t)+'</h3><p>'+esc(String(p.body).replace(/<[^>]+>/g,' ').replace(/## /g,'').replace(/\s+/g,' ').trim().slice(0,110))+'...</p></a>'}
 function head(s,top){var tg=top?'h1':'h2';return (s.t?'<div class="eyebrow">'+esc(s.t)+'</div>':'')+(s.h?'<'+tg+'>'+esc(s.h)+'</'+tg+'>':'')+(s.d?'<p class="sub">'+esc(s.d)+'</p>':'')}
 function secHtml(s,i,top){var cl=(i%2?'alt':'')+(top?' first':''),w=function(x){return '<section class="'+cl+'"><div class="wrap">'+x+'</div></section>'},hd=head(s,top),btn=s.link?'<p style="margin-top:22px">'+lk(s.link,s.linkText||'Learn more','btn ghost')+'</p>':'',it=s.items||[];
 switch(s.type){
 case 'hero':var tg=String(s.tags||'').split(',').map(function(x){return x.trim()}).filter(Boolean);return '<div class="hero"><div class="wrap'+(it.length?'':' one')+'"><div>'+(s.t?'<div class="eyebrow">'+esc(s.t)+'</div>':'')+'<h1>'+esc(s.h)+'</h1><p>'+esc(s.d)+'</p><div class="row">'+lk(s.link,s.linkText||'Learn more','btn')+lk(s.link2,s.linkText2||'More','btn ghost')+'</div>'+(tg.length?'<div class="trust">'+tg.map(function(x){return '<span>'+esc(x)+'</span>'}).join('')+'</div>':'')+'</div>'+(it.length?'<div class="plan"><ul>'+it.map(function(x){return '<li><span>'+esc(x.h)+'</span><b>'+esc(x.d)+'</b></li>'}).join('')+'</ul></div>':'')+'</div></div>';
-case 'text':return w(hd+(s.b?'<div class="prose">'+prose(s.b)+'</div>':'')+(s.link?'<p style="margin-top:20px">'+lk(s.link,s.linkText||'Learn more','btn')+'</p>':''));
+case 'text':return w(hd+(s.b?'<div class="prose">'+bodyHtml(s.b)+'</div>':'')+(s.link?'<p style="margin-top:20px">'+lk(s.link,s.linkText||'Learn more','btn')+'</p>':''));
 case 'cards':return w(hd+'<div class="grid">'+it.map(function(x){return '<div class="card"><h3>'+esc(x.h)+'</h3><p>'+esc(x.d)+'</p>'+lk(x.link,x.linkText||'Open','go')+'</div>'}).join('')+'</div>'+btn);
 case 'courses':var lim=+s.limit||0,cs=S.courses.filter(function(c){return lim||filt==='all'||c.c===filt});if(lim)cs=cs.slice(0,lim);
 var chips=lim?'':'<div class="chips">'+[['all','All'],['ug','Undergraduate'],['pg','Postgraduate'],['sc','School'],['bk','Books']].map(function(x){return '<button class="chip" data-f="'+x[0]+'" aria-pressed="'+(filt===x[0])+'">'+x[1]+'</button>'}).join('')+'</div>';
@@ -47,59 +62,80 @@ return '<section class="'+cl+'"><div class="wrap">'+hd+'</div><div class="top"><
 case 'team':return w(hd+'<div class="grid">'+S.team.map(function(t){return '<div class="tc tm" style="width:auto">'+ph(t)+'<div class="t"><b>'+esc(t.n)+'</b><span>'+esc(t.role)+'</span><p style="font-size:14.5px;color:var(--mute);margin:6px 0 0">'+esc(t.bio)+'</p></div></div>'}).join('')+'</div>'+btn);
 case 'posts':var lm=+s.limit||0,ps=lm?S.posts.slice(0,lm):S.posts;return w(hd+'<div class="grid">'+(ps.map(postCard).join('')||'<p>No posts yet.</p>')+'</div>'+btn);
 case 'faq':return w(hd+S.faq.map(function(q){return '<details><summary>'+esc(q.q)+'</summary><p>'+esc(q.a)+'</p></details>'}).join('')+btn);
+case 'html':return w(hd+'<div class="custom">'+(s.b||'')+'</div>');
+case 'image':return w(hd+(s.img?'<img class="cover" alt="'+esc(s.h)+'" src="'+esc(im(s.img))+'">':'')+btn);
+case 'video':var yv=ytId(s.url);return w(hd+(yv?'<div class="vid"><iframe src="https://www.youtube.com/embed/'+yv+'" title="'+esc(s.h||'Video')+'" loading="lazy" allowfullscreen></iframe></div>':'')+btn);
+case 'links':return w(hd+'<div class="row">'+it.map(function(x){return lk(x.link,x.h||'Open','btn ghost')}).join('')+'</div>');
+case 'pyq':var pth=(pq[i]||[]).slice(),cur=s.tree||[],cr=[{n:s.h||'PYQs',p:[]}];
+for(var z=0;z<pth.length;z++){var nd=cur[pth[z]];if(!nd){pth=pth.slice(0,z);break}cr.push({n:nd.n,p:pth.slice(0,z+1)});cur=nd.children||[]}
+return w(hd+(pth.length?'<div class="crumbs">'+cr.map(function(c,k){return (k?'<span>/</span>':'')+'<button data-pq="'+i+':'+c.p.join('.')+'">'+esc(c.n)+'</button>'}).join('')+'</div>':'')+'<div class="grid">'+(cur.map(function(n,ix){var np=pth.concat(ix).join('.'),kids=(n.children||[]).length;return kids?'<button class="card fld" data-pq="'+i+':'+np+'"><h3>'+esc(n.n)+'</h3><span>'+kids+' items</span></button>':(n.link?'<button class="card fld" data-pv="'+i+':'+np+'"><h3>'+esc(n.n)+'</h3><span>Open PDF</span></button>':'<div class="card"><h3>'+esc(n.n)+'</h3><p>Coming soon</p></div>')}).join('')||'<p>Nothing here yet.</p>')+'</div>');
 case 'cta':return w('<div class="cta">'+hd+(s.link?'<p>'+lk(s.link,s.linkText||'Get started','btn')+'</p>':'')+'</div>')}
 return ''}
 function pageHtml(r){var f=find(r);
 if(f.k==='page')return f.g.sections.map(function(s,i){return secHtml(s,i,i===0&&r!==''&&s.type!=='hero')}).join('');
-if(f.k==='post'){var p=f.p;return '<div class="wrap pg"><p>'+L('blog','Back to blog','btn ghost sm')+'</p><div style="color:var(--brand);font-weight:600">'+esc(p.cat)+' | '+esc(p.date)+'</div><h1>'+esc(p.t)+'</h1>'+(p.cover?'<img class="cover" style="margin-bottom:24px" alt="" src="'+esc(im(p.cover))+'">':'')+'<div class="prose">'+prose(p.body)+'</div></div>'}
+if(f.k==='post'){var p=f.p;return '<div class="wrap pg"><p>'+L('blog','Back to blog','btn ghost sm')+'</p><div style="color:var(--brand);font-weight:600">'+esc(p.cat)+' | '+esc(p.date)+'</div><h1>'+esc(p.t)+'</h1>'+(p.cover?'<img class="cover" style="margin-bottom:24px" alt="" src="'+esc(im(p.cover))+'">':'')+'<div class="prose">'+bodyHtml(p.body)+'</div></div>'}
 return '<div class="wrap pg"><h1>Page not found</h1><p class="sub">This page does not exist.</p><p>'+L('','Go to home','btn')+'</p></div>'}
 function soc(){return (S.social||[]).filter(function(x){return x.u}).map(function(x){return '<a href="'+esc(x.u)+'" target="_blank" rel="noopener">'+esc(x.n)+'</a>'}).join('')}
 function shell(r){var wa='https://wa.me/'+esc(S.wa);
 return '<div class="bar">'+esc(S.banner)+'</div><header><div class="wrap">'+L('',(S.logo?'<img alt="" src="'+esc(im(S.logo))+'">':'<i>J</i>')+'Jamia Entrance Adda','logo')+'<button class="btn sm" data-login="1">Login / Register</button></div></header><nav>'+nav().map(function(n){return L(n[0],esc(n[1]),r===n[0]?'on':'')}).join('')+'</nav><main>'+pageHtml(r)
 +'<section id="contact" class="alt"><div class="wrap two"><div id="enquire">'+head({t:S.contactT,h:S.contactH,d:S.contactD})+'<form id="f"><input id="n" placeholder="Your name" required><input id="p" placeholder="Phone number" inputmode="tel" required><select id="c">'+S.courses.map(function(c){return '<option>'+esc(c.n)+'</option>'}).join('')+'</select><button class="btn" type="submit">Send on WhatsApp</button></form></div><div class="info"><h2>Contact us</h2><p class="sub">We reply fast.</p><p>'+esc(S.address)+'</p><p><a href="'+tel(S.phone1)+'">'+esc(S.phone1)+'</a><br><a href="'+tel(S.phone2)+'">'+esc(S.phone2)+'</a></p><p><a href="mailto:'+esc(S.email)+'">'+esc(S.email)+'</a></p><div class="soc">'+soc()+'</div></div></div></section></main><footer><div class="wrap"><div class="soc" style="margin:0 0 12px">'+soc()+'</div>'+esc(S.footer)+'</div></footer><a class="btn wa" href="'+wa+'?text=Hi%2C%20I%20want%20course%20details" target="_blank" rel="noopener">WhatsApp us</a>'
-+'<div class="modal" id="lg"><div class="mbox"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="font-size:24px;margin:0">Student login</h2><button class="btn ghost sm" id="lgx">Close</button></div><p class="sub" style="margin:10px 0">Already enrolled? Log in to your classes and tests.</p><a class="btn" style="display:block;text-align:center" href="'+esc(S.loginUrl)+'" target="_blank" rel="noopener">Login to my classes</a><hr style="border:0;border-top:1px solid var(--line);margin:18px 0"><b>New here? Register</b><form id="lf" style="margin-top:10px"><input id="ln" placeholder="Your name" required><input id="lp" placeholder="Mobile number" inputmode="tel" required><select id="lc">'+S.courses.map(function(c){return '<option>'+esc(c.n)+'</option>'}).join('')+'</select><button class="btn" type="submit">Register on WhatsApp</button></form></div></div>'}
-function go(r){rt=r;try{history.pushState(null,'',U(r)+(wantAdmin?'?admin':''))}catch(e){}site();scrollTo(0,0)}
-function site(keep){var y=scrollY;$('root').innerHTML=shell(rt)+(owner?'<button class="btn adm" id="admbtn">Edit site</button><div id="sheet"></div>':'');
++'<div class="modal" id="pv"><div class="mbox big"><div class="row" style="justify-content:space-between;align-items:center"><b id="pvt"></b><button class="btn ghost sm" id="pvx">Close</button></div><iframe id="pvf" title="PDF" allowfullscreen></iframe><div class="row"><a class="btn sm" id="pvo" target="_blank" rel="noopener">Open in new tab</a><a class="btn ghost sm" id="pvd" target="_blank" rel="noopener">Download</a></div></div></div><div class="modal" id="lg"><div class="mbox"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="font-size:24px;margin:0">Student login</h2><button class="btn ghost sm" id="lgx">Close</button></div><p class="sub" style="margin:10px 0">Already enrolled? Log in to your classes and tests.</p><a class="btn" style="display:block;text-align:center" href="'+esc(S.loginUrl)+'" target="_blank" rel="noopener">Login to my classes</a><hr style="border:0;border-top:1px solid var(--line);margin:18px 0"><b>New here? Register</b><form id="lf" style="margin-top:10px"><input id="ln" placeholder="Your name" required><input id="lp" placeholder="Mobile number" inputmode="tel" required><select id="lc">'+S.courses.map(function(c){return '<option>'+esc(c.n)+'</option>'}).join('')+'</select><button class="btn" type="submit">Register on WhatsApp</button></form></div></div>'}
+function go(r){rt=r;pq={};try{history.pushState(null,'',U(r)+'')}catch(e){}site();scrollTo(0,0)}
+function site(keep){var y=scrollY;$('root').innerHTML=shell(rt)+(owner?'<button class="btn adm" id="admbtn">Edit site</button><div id="sheet"></div>':(wantAdmin?'<button class="btn adm" id="admlogin">Admin login</button>':''));
 var m=metaFor(rt);document.title=m.t;
 document.querySelectorAll('[data-r]').forEach(function(a){a.onclick=function(e){e.preventDefault();go(a.dataset.r)}});
 document.querySelectorAll('[data-s]').forEach(function(a){a.onclick=function(e){e.preventDefault();var t=$(a.dataset.s);if(t)t.scrollIntoView({behavior:'smooth'})}});
 document.querySelectorAll('.chip').forEach(function(b){b.onclick=function(){filt=b.dataset.f;site(true)}});
 document.querySelectorAll('[data-login]').forEach(function(b){b.onclick=function(){$('lg').className='modal on'}});
+document.querySelectorAll('[data-pq]').forEach(function(b){b.onclick=function(){var a=b.dataset.pq.split(':');pq[+a[0]]=a[1]===''?[]:a[1].split('.').map(Number);site(true)}});
+document.querySelectorAll('[data-pv]').forEach(function(b){b.onclick=function(){var a=b.dataset.pv.split(':'),l=find(rt).g.sections[+a[0]].tree,nd;a[1].split('.').forEach(function(ix){nd=l[+ix];l=nd.children||[]});openPv(nd)}});
+$('pvx').onclick=function(){$('pv').className='modal';$('pvf').src='about:blank'};
 $('lgx').onclick=function(){$('lg').className='modal'};
 $('lf').onsubmit=function(e){e.preventDefault();window.open('https://wa.me/'+S.wa+'?text='+encodeURIComponent('Registration request. Name: '+$('ln').value+'. Mobile: '+$('lp').value+'. Course: '+$('lc').value),'_blank')};
 $('f').onsubmit=function(e){e.preventDefault();window.open('https://wa.me/'+S.wa+'?text='+encodeURIComponent('Hi, I am '+$('n').value+'. Phone: '+$('p').value+'. I am interested in '+$('c').value+'. Please call me.'),'_blank')};
 if(owner)$('admbtn').onclick=function(){$('sheet').className='on';panel()};
+if(!owner&&wantAdmin&&$('admlogin'))$('admlogin').onclick=function(){gate()};
 if(keep)scrollTo(0,y)}
 /* ---------- admin ---------- */
 function F(k,l,v,a){return '<label>'+l+(a?'<textarea rows="'+a+'" data-k="'+k+'">'+esc(v)+'</textarea>':'<input data-k="'+k+'" value="'+esc(v)+'">')+'</label>'}
 var LISTS={
-posts:{add:'blog post',nw:function(){return{slug:'',t:'',cat:'Updates',date:new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}),cover:'',body:'',st:'',sd:''}},f:[['t','Title'],['slug','Post address (slug), auto from title if empty'],['cat','Category'],['date','Date'],['body','Write your post (blank line = new paragraph, ## = heading)',10],['st','SEO title'],['sd','SEO description',2]],ph:[800,450],pk:'cover'},
+posts:{add:'blog post',nw:function(){return{slug:'',t:'',cat:'Updates',date:new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}),cover:'',body:'',st:'',sd:''}},f:[['t','Title'],['slug','Post address (slug), auto from title if empty'],['cat','Category'],['date','Date'],['body','Write your post',10,'rich'],['st','SEO title'],['sd','SEO description',2]],ph:[800,450],pk:'cover'},
 redirects:{add:'redirect',nw:{from:'',to:''},f:[['from','Old address, e.g. old-page'],['to','Send visitors to (page name or full link)']]},
 toppers:{add:'achiever',nw:{n:'',r:'',p:''},f:[['n','Name'],['r','Rank, e.g. Rank 01 Geography']],ph:[420,540]},
 team:{add:'teacher',nw:{n:'',role:'',bio:'',p:''},f:[['n','Name'],['role','Role / subject'],['bio','Short bio',2]],ph:[420,420]},
-courses:{add:'course',nw:{n:'New course',d:'',c:'ug'},f:[['n','Course name'],['d','Description',2],['c','Type']],sel:{c:[['ug','Undergraduate'],['pg','Postgraduate'],['sc','School'],['bk','Books']]}},
+courses:{add:'course',nw:{n:'New course',d:'',c:'ug',link:'',linkText:'Enroll now'},f:[['n','Course name'],['d','Description',2],['c','Type'],['link','Enroll link (paste Classplus course link here)'],['linkText','Button text (default: Enroll now)']],sel:{c:[['ug','Undergraduate'],['pg','Postgraduate'],['sc','School'],['bk','Books']]}},
 faq:{add:'question',nw:{q:'',a:''},f:[['q','Question'],['a','Answer',2]]},
 social:{add:'social account',nw:{n:'',u:''},f:[['n','Name, e.g. Facebook'],['u','Profile link (https://...)']]}};
 function listUI(k){var Q=LISTS[k],pk=Q.pk||'p';return '<button class="btn" data-add="'+k+'">+ Add '+Q.add+'</button>'+S[k].map(function(it,i){
 return '<div class="item">'+(Q.ph?'<div class="row">'+(it[pk]?'<img class="thumb" src="'+esc(im(it[pk]))+'">':'<div class="thumb"></div>')+'<label class="btn ghost sm" style="cursor:pointer;align-self:center">Choose photo<input type="file" accept="image/*" hidden data-ph="'+k+'" data-i="'+i+'"></label></div>':'')
-+Q.f.map(function(f){var a='data-a="'+k+'" data-i="'+i+'" data-f="'+f[0]+'"';
++Q.f.map(function(f){if(f[3]==='rich')return '<b style="font-size:14px">'+f[1]+' (select words to make bold, heading or link)</b>'+rteBox(k+'.'+i+'.'+f[0],it[f[0]]);var a='data-a="'+k+'" data-i="'+i+'" data-f="'+f[0]+'"';
 if(Q.sel&&Q.sel[f[0]])return '<select '+a+'>'+Q.sel[f[0]].map(function(o){return '<option value="'+o[0]+'"'+(it[f[0]]===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select>';
 return f[2]?'<label>'+f[1]+'<textarea rows="'+f[2]+'" '+a+'>'+esc(it[f[0]])+'</textarea></label>':'<input placeholder="'+f[1]+'" '+a+' value="'+esc(it[f[0]])+'">'}).join('')
 +'<button class="btn red sm" data-del="'+k+'" data-i="'+i+'">Delete</button></div>'}).join('')}
-var TYPES=[['hero','Hero (big top banner)'],['text','Text'],['cards','Cards'],['courses','Courses list'],['toppers','Achievers'],['team','Team'],['posts','Blog posts'],['faq','FAQ'],['cta','Call-to-action banner']];
+var TYPES=[['hero','Hero (big top banner)'],['text','Text'],['cards','Cards'],['courses','Courses list'],['toppers','Achievers'],['team','Team'],['posts','Blog posts'],['faq','FAQ'],['pyq','PYQ folders + PDFs'],['text','Text (rich)'],['image','Image'],['video','YouTube video'],['links','Button links'],['html','Custom HTML (advanced)'],['cta','Call-to-action banner']];
 function sI(a,i,k,v,ph,rows){var at='data-sec="'+i+'" data-f="'+k+'"';return rows?'<label>'+ph+'<textarea rows="'+rows+'" '+at+'>'+esc(v)+'</textarea></label>':'<input placeholder="'+ph+'" '+at+' value="'+esc(v)+'">'}
-function secUI(s,i,n){var t=s.type,h='<div class="item"><div class="row" style="justify-content:space-between;align-items:center"><b>'+(i+1)+'. '+esc((TYPES.filter(function(x){return x[0]===t})[0]||[0,t])[1])+'</b><span><button class="btn ghost sm" data-mv="'+i+'" data-d="-1">&uarr;</button> <button class="btn ghost sm" data-mv="'+i+'" data-d="1">&darr;</button> <button class="btn red sm" data-ds="'+i+'">Delete</button></span></div>';
+function rteBar(){var o='<option value="">Link to a page...</option>'+S.pages.filter(function(p){return p.slug!==''}).map(function(p){return '<option value="'+esc(p.slug)+'">'+esc(p.t)+'</option>'}).join('')+S.posts.map(function(p){return '<option value="blog/'+esc(p.slug||slug(p.t))+'">Blog: '+esc(p.t)+'</option>'}).join('');
+return '<div class="rbar"><button type="button" data-cmd="bold"><b>B</b></button><button type="button" data-cmd="italic"><i>I</i></button><button type="button" data-cmd="underline"><u>U</u></button><button type="button" data-blk="h2">Heading</button><button type="button" data-blk="h3">Sub-heading</button><button type="button" data-blk="p">Normal</button><button type="button" data-cmd="insertUnorderedList">&bull; List</button><button type="button" data-cmd="insertOrderedList">1. List</button><button type="button" data-blk="blockquote">Quote</button><button type="button" data-link="1">Link</button><button type="button" data-cmd="unlink">Unlink</button><select>'+o+'</select></div>'}
+function rteBox(key,html){return rteBar()+'<div class="rte" contenteditable="true" data-rk="'+key+'">'+richHtml(html)+'</div>'}
+function treeUI(nodes,i,path){return nodes.map(function(nd,k){var p=path.concat(k).join('.'),id=i+':'+p,kids=nd.children||[],isData=/^data:/.test(nd.link||'');
+return '<div class="tn"><input placeholder="Name (e.g. UG, B.A. Hons, 2025)" data-tf="'+id+'" data-f="n" value="'+esc(nd.n)+'">'+(kids.length?'':'<input placeholder="PDF link (Google Drive share link) - for the last level only" data-tf="'+id+'" data-f="link" value="'+(isData?'':esc(nd.link))+'">'+(isData?'<small style="color:var(--brand)">PDF chosen, publish par upload hogi</small>':''))
++'<div class="row"><label class="btn ghost sm" style="cursor:pointer">Upload PDF<input type="file" accept="application/pdf" hidden data-tup="'+id+'"></label><button class="btn ghost sm" data-tm="'+id+'" data-d="-1">&uarr;</button><button class="btn ghost sm" data-tm="'+id+'" data-d="1">&darr;</button><button class="btn sm" data-ta="'+id+'">+ Inside</button><button class="btn sm" data-tam="'+id+'">+ Many</button><button class="btn red sm" data-tdl="'+id+'">Delete</button></div>'+(kids.length?'<div class="tkids">'+treeUI(kids,i,path.concat(k))+'</div>':'')+'</div>'}).join('')}
+function secUI(s,i){var t=s.type,h='<div class="item"><div class="row" style="justify-content:space-between;align-items:center"><b>'+(i+1)+'. '+esc((TYPES.filter(function(x){return x[0]===t})[0]||[0,t])[1])+'</b><span><button class="btn ghost sm" data-mv="'+i+'" data-d="-1">&uarr;</button> <button class="btn ghost sm" data-mv="'+i+'" data-d="1">&darr;</button> <button class="btn red sm" data-ds="'+i+'">Delete</button></span></div>';
 h+=sI(0,i,'t',s.t,'Small title (above heading)')+sI(0,i,'h',s.h,'Heading')+sI(0,i,'d',s.d,'Description',3);
-if(t==='text')h+=sI(0,i,'b',s.b,'Page text (blank line = paragraph, ## = heading)',8);
+if(t==='text')h+='<b style="font-size:14px">Text (select words to make bold, heading or link)</b>'+rteBox('sec.'+i+'.b',s.b);
+if(t==='html')h+=sI(0,i,'b',s.b,'Custom HTML code (embed, iframe, form...)',8);
+if(t==='video')h+=sI(0,i,'url',s.url,'YouTube video link');
+if(t==='image')h+=(s.img?'<img class="cover" src="'+esc(im(s.img))+'">':'')+'<label class="btn ghost sm" style="cursor:pointer">Choose image<input type="file" accept="image/*" hidden data-sph="'+i+'"></label>';
 if(t==='courses'||t==='posts')h+=sI(0,i,'limit',s.limit||'','How many to show (empty or 0 = all)');
 if(t==='toppers')h+='<select data-sec="'+i+'" data-f="mode"><option value="marquee"'+(s.mode!=='grid'?' selected':'')+'>Sliding strip</option><option value="grid"'+(s.mode==='grid'?' selected':'')+'>Grid</option></select>';
 if(t==='hero')h+=sI(0,i,'tags',s.tags,'Tags, comma separated (JMI, AMU, CUET)');
-if(t!=='courses'&&t!=='toppers'&&t!=='team'&&t!=='faq'&&t!=='posts'||true)h+=sI(0,i,'link',s.link,'Redirect link (page name like courses, #enquire, or full link)')+sI(0,i,'linkText',s.linkText,'Button text');
+if(t!=='links'&&t!=='pyq'&&t!=='html')h+=sI(0,i,'link',s.link,'Redirect link (page name like courses, #enquire, or full link)')+sI(0,i,'linkText',s.linkText,'Button text');
 if(t==='hero')h+=sI(0,i,'link2',s.link2,'Second button link')+sI(0,i,'linkText2',s.linkText2,'Second button text');
-if(t==='cards'||t==='hero'){h+='<b style="font-size:14px">'+(t==='hero'?'Side card lines (left text, right text)':'Cards')+'</b><button class="btn sm" data-ai="'+i+'">+ Add '+(t==='hero'?'line':'card')+'</button>';
-(s.items||[]).forEach(function(x,j){var at='data-sec="'+i+'" data-it="'+j+'"';h+='<div class="item"><input placeholder="Heading" '+at+' data-f="h" value="'+esc(x.h)+'"><textarea rows="2" placeholder="Description" '+at+' data-f="d">'+esc(x.d)+'</textarea>'+(t==='cards'?'<input placeholder="Redirect link" '+at+' data-f="link" value="'+esc(x.link)+'"><input placeholder="Button text" '+at+' data-f="linkText" value="'+esc(x.linkText)+'">':'')+'<button class="btn red sm" data-di="'+i+'" data-j="'+j+'">Remove</button></div>'})}
+if(t==='pyq')h+='<b style="font-size:14px">Folders and PDFs (UG &rarr; Course &rarr; Year &rarr; PDF)</b><button class="btn sm" data-ta="'+i+':">+ Add folder</button><button class="btn sm" data-tam="'+i+':">+ Add many</button>'+treeUI(s.tree||[],i,[]);
+if(t==='cards'||t==='hero'||t==='links'){h+='<b style="font-size:14px">'+(t==='hero'?'Side card lines (left text, right text)':t==='links'?'Buttons':'Cards')+'</b><button class="btn sm" data-ai="'+i+'">+ Add</button>';
+(s.items||[]).forEach(function(x,j){var at='data-sec="'+i+'" data-it="'+j+'"';h+='<div class="item"><input placeholder="'+(t==='links'?'Button text':'Heading')+'" '+at+' data-f="h" value="'+esc(x.h)+'">'+(t==='links'?'':'<textarea rows="2" placeholder="Description" '+at+' data-f="d">'+esc(x.d)+'</textarea>')+(t==='cards'||t==='links'?'<input placeholder="Redirect link" '+at+' data-f="link" value="'+esc(x.link)+'">':'')+(t==='cards'?'<input placeholder="Button text" '+at+' data-f="linkText" value="'+esc(x.linkText)+'">':'')+'<button class="btn red sm" data-di="'+i+'" data-j="'+j+'">Remove</button></div>'})}
 return h+'</div>'}
-function panel(){var b='',g=S.pages[pi]||S.pages[0];
+function panel(reset){var pb0=document.querySelector('#sheet .body'),sy=pb0&&!reset?pb0.scrollTop:0,b='',g=S.pages[pi]||S.pages[0];
 if(tab==='basic')b=[['banner','Top banner'],['phone1','Phone 1'],['phone2','Phone 2'],['wa','WhatsApp number (91XXXXXXXXXX)'],['email','Email'],['address','Address'],['loginUrl','Student login link'],['contactT','Contact section: small title'],['contactH','Contact section: heading'],['footer','Footer text']].map(function(x){return F(x[0],x[1],S[x[0]])}).join('')+F('contactD','Contact section: description',S.contactD,2)+'<div class="item"><b>Admin passcode</b><button class="btn ghost sm" id="cpw">Change passcode</button></div>'+'<div class="item"><b>Logo</b>'+(S.logo?'<img style="height:60px;width:auto;object-fit:contain;align-self:start" src="'+esc(im(S.logo))+'">':'<p style="margin:0;color:var(--mute);font-size:14px">No logo yet.</p>')+'<label class="btn ghost sm" style="cursor:pointer">Choose logo<input type="file" accept="image/*" hidden id="lgo"></label>'+(S.logo?'<button class="btn red sm" id="lgd">Remove logo</button>':'')+'</div>';
 else if(tab==='pages'){b='<select id="ps">'+S.pages.map(function(p,i){return '<option value="'+i+'"'+(i===pi?' selected':'')+'>'+esc(p.t)+'</option>'}).join('')+'</select><div class="row"><button class="btn sm" id="np">+ New page</button>'+(g.slug!==''?'<button class="btn red sm" id="dp">Delete this page</button>':'')+'</div>'
 +'<div class="item"><b>Page settings</b><input placeholder="Menu name" data-pg="t" value="'+esc(g.t)+'">'+(g.slug!==''?'<input placeholder="Page address (slug)" data-pg="slug" value="'+esc(g.slug)+'">':'')+'<select data-pg="nav"><option value="y"'+(g.nav!=='n'?' selected':'')+'>Show in menu</option><option value="n"'+(g.nav==='n'?' selected':'')+'>Hide from menu</option></select><input placeholder="SEO title" data-pg="st" value="'+esc(g.st)+'"><textarea rows="2" placeholder="SEO description" data-pg="sd">'+esc(g.sd)+'</textarea></div>'
@@ -111,7 +147,8 @@ var T=[['pages','Pages'],['posts','Blog'],['toppers','Achievers'],['team','Team'
 $('sheet').innerHTML='<div class="pan"><div class="ph1"><b>Edit site</b><button class="btn ghost sm" id="cl">Close</button></div><div class="tabs">'+T.map(function(t){return '<button class="btn sm'+(tab===t[0]?'':' ghost')+'" data-t="'+t[0]+'">'+t[1]+'</button>'}).join('')+'</div><div class="body">'+b+'</div><div class="foot"><button class="btn" id="pub">Save and publish</button></div></div>';
 var P=$('sheet'),on=function(sel,fn){P.querySelectorAll(sel).forEach(fn)};
 $('cl').onclick=function(){P.className='';site(true)};
-on('[data-t]',function(x){x.onclick=function(){tab=x.dataset.t;panel()}});
+var nb=P.querySelector('.body');if(nb)nb.scrollTop=sy;
+on('[data-t]',function(x){x.onclick=function(){tab=x.dataset.t;panel(true)}});
 on('[data-k]',function(x){x.oninput=function(){S[x.dataset.k]=x.value}});
 on('[data-a]',function(x){x.oninput=function(){S[x.dataset.a][x.dataset.i][x.dataset.f]=x.value}});
 on('[data-pg]',function(x){x.oninput=x.onchange=function(){g[x.dataset.pg]=x.value}});
@@ -132,13 +169,32 @@ if($('lgo'))$('lgo').onchange=function(){var f=this.files[0];if(f)shrinkLogo(f,f
 if($('lgd'))$('lgd').onclick=function(){S.logo='';panel()};
 if($('og'))$('og').onchange=function(){var f=this.files[0];if(f)shrink(f,1200,630,function(u){S.ogImage=u;panel()})};
 if($('sv'))$('sv').onclick=function(){localStorage.jea_repo=$('rp').value.trim();localStorage.jea_tok=$('tk').value.trim();toast('Saved')};
+
+function setRk(key,html){var p=key.split('.');if(p[0]==='sec')S.pages[pi].sections[+p[1]][p[2]]=html;else S[p[0]][+p[1]][p[2]]=html}
+function tList(i,p){var l=S.pages[pi].sections[i].tree=S.pages[pi].sections[i].tree||[];if(p!=='')p.split('.').forEach(function(ix){var n=l[+ix];l=n.children=n.children||[]});return l}
+function tNode(i,p){var a=p.split('.'),k=+a.pop();return{l:tList(i,a.join('.')),k:k,n:tList(i,a.join('.'))[k]}}
+P.querySelectorAll('.rte').forEach(function(ed){ed.oninput=function(){setRk(ed.dataset.rk,ed.innerHTML)};['keyup','mouseup','touchend','blur'].forEach(function(ev){ed.addEventListener(ev,function(){var s=getSelection();if(s.rangeCount&&ed.contains(s.anchorNode))saved=s.getRangeAt(0).cloneRange()})})});
+P.querySelectorAll('.rbar').forEach(function(bar){var ed=bar.nextElementSibling;
+function run(fn){ed.focus();if(saved){var s=getSelection();s.removeAllRanges();s.addRange(saved)}fn();setRk(ed.dataset.rk,ed.innerHTML)}
+bar.querySelectorAll('button').forEach(function(b){b.onpointerdown=function(e){e.preventDefault()};b.onclick=function(){
+if(b.dataset.cmd)run(function(){document.execCommand(b.dataset.cmd)});
+else if(b.dataset.blk)run(function(){document.execCommand('formatBlock',false,b.dataset.blk)});
+else if(b.dataset.link){var u=prompt('Link likho: poora link (https://...) ya site ka page jaise courses, pyqs, blog/post-address');if(u){u=u.trim();if(!/^(https?:|mailto:|tel:)/i.test(u))u='https://internal.link/'+u.replace(/^\/+/,'');run(function(){document.execCommand('createLink',false,u)})}}}});
+var sl=bar.querySelector('select');sl.onchange=function(){if(sl.value){var v=sl.value;run(function(){document.execCommand('createLink',false,'https://internal.link/'+v)});sl.value=''}}});
+on('[data-tf]',function(x){x.oninput=function(){var a=x.dataset.tf.split(':');tNode(+a[0],a[1]).n[x.dataset.f]=x.value}});
+on('[data-ta]',function(x){x.onclick=function(){var a=x.dataset.ta.split(':'),l=a[1]===''?tList(+a[0],''):(tNode(+a[0],a[1]).n.children=tNode(+a[0],a[1]).n.children||[]);l.push({n:'New',link:'',children:[]});panel()}});
+on('[data-tam]',function(x){x.onclick=function(){var a=x.dataset.tam.split(':'),v=prompt('Names likho, comma se alag (jaise 2025, 2024, 2023)');if(!v)return;var l=a[1]===''?tList(+a[0],''):(tNode(+a[0],a[1]).n.children=tNode(+a[0],a[1]).n.children||[]);v.split(',').forEach(function(n){n=n.trim();if(n)l.push({n:n,link:'',children:[]})});panel()}});
+on('[data-tdl]',function(x){x.onclick=function(){if(confirm('Delete this and everything inside it?')){var a=x.dataset.tdl.split(':'),r=tNode(+a[0],a[1]);r.l.splice(r.k,1);panel()}}});
+on('[data-tm]',function(x){x.onclick=function(){var a=x.dataset.tm.split(':'),r=tNode(+a[0],a[1]),j=r.k+ +x.dataset.d;if(j<0||j>=r.l.length)return;var t=r.l[r.k];r.l[r.k]=r.l[j];r.l[j]=t;panel()}});
+on('[data-tup]',function(x){x.onchange=function(){var f=x.files[0];if(!f)return;if(f.size>25*1024*1024){toast('PDF 25 MB se choti rakho');return}var r=new FileReader();r.onload=function(){var a=x.dataset.tup.split(':');tNode(+a[0],a[1]).n.link=r.result;panel()};r.readAsDataURL(f)}});
+on('[data-sph]',function(x){x.onchange=function(){var f=x.files[0];if(f)shrink(f,1200,675,function(u){g.sections[+x.dataset.sph].img=u;panel()})}});
 $('pub').onclick=publish}
 function shrinkLogo(file,cb){var img=new Image(),r=new FileReader();r.onload=function(){img.onload=function(){var H=Math.min(120,img.height),W=Math.round(img.width*H/img.height),c=document.createElement('canvas');c.width=W;c.height=H;c.getContext('2d').drawImage(img,0,0,W,H);cb(c.toDataURL('image/png'))};img.src=r.result};r.readAsDataURL(file)}
 function shrink(file,W,H,cb){var img=new Image(),r=new FileReader();r.onload=function(){img.onload=function(){var c=document.createElement('canvas');c.width=W;c.height=H;var s=Math.max(W/img.width,H/img.height),w=img.width*s,h=img.height*s;c.getContext('2d').drawImage(img,(W-w)/2,(H-h)/3,w,h);cb(c.toDataURL('image/jpeg',.82))};img.src=r.result};r.readAsDataURL(file)}
 function docHtml(r){var adm=r==='admin',rr=adm?'':(r||''),m=metaFor(rr),can=S.domain.replace(/\/+$/,'')+'/'+(rr?rr+'/':''),h='<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n<title>'+esc(m.t)+'</title>\n<meta name="description" content="'+esc(m.d)+'">\n';
 h+=(adm||r===null)?'<meta name="robots" content="noindex">\n':'<link rel="canonical" href="'+esc(can)+'">\n<meta property="og:type" content="'+m.type+'">\n<meta property="og:title" content="'+esc(m.t)+'">\n<meta property="og:description" content="'+esc(m.d)+'">\n<meta property="og:url" content="'+esc(can)+'">\n'+(m.og?'<meta property="og:image" content="'+esc(abs(m.og))+'">\n':'')+'<meta name="twitter:card" content="summary_large_image">\n'+(m.ld?'<script type="application/ld+json">'+JSON.stringify(m.ld).replace(/</g,'\\u003c')+'<\/script>\n':'');
 return h+(S.logo?'<link rel="icon" href="'+esc(im(S.logo))+'">\n':'')+'<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;800&family=Hind:wght@400;500;600&display=swap">\n<link rel="stylesheet" href="'+BASE+'style.css">\n</head>\n<body>\n<div id="root">'+shell(r===null?'404x':rr)+'</div>\n<div id="toast" role="status"></div>\n<script type="application/json" id="state">'+JSON.stringify(S).replace(/</g,'\\u003c')+'<\/script>\n'+(r===null?'':'<script>window.ROUTE='+JSON.stringify(r)+'<\/script>\n')+'<script src="'+BASE+'app.js"><\/script>\n</body>\n</html>'}
-function walk(o,bl){for(var k in o){var v=o[k];if(typeof v==='string'&&v.indexOf('data:image/')===0){var p='img/'+Date.now().toString(36)+bl.length+(v.indexOf('image/png')>0?'.png':'.jpg');bl.push({path:p,b64:v.split(',')[1]});o[k]=p}else if(v&&typeof v==='object')walk(v,bl)}}
+function walk(o,bl){for(var k in o){var v=o[k];if(typeof v==='string'&&v.indexOf('data:image/')===0){var p='img/'+Date.now().toString(36)+bl.length+(v.indexOf('image/png')>0?'.png':'.jpg');bl.push({path:p,b64:v.split(',')[1]});o[k]=p}else if(typeof v==='string'&&v.indexOf('data:application/pdf')===0){var p2='pdf/'+Date.now().toString(36)+bl.length+'.pdf';bl.push({path:p2,b64:v.split(',')[1]});o[k]=p2}else if(v&&typeof v==='object')walk(v,bl)}}
 async function src(id,url){var e=$(id);if(e)return e.textContent;return (await fetch(BASE+url+'?'+Date.now())).text()}
 async function publish(){var btn=$('pub');btn.disabled=true;btn.textContent='Publishing...';
 try{var REPO=localStorage.jea_repo,TOK=localStorage.jea_tok;
@@ -148,7 +204,7 @@ async function gh(p,method,body){var r=await fetch('https://api.github.com/repos
 var ps={};S.pages.forEach(function(p,i){if(i===0||p.slug===''){p.slug='';return}var b=slug(p.slug||p.t)||'page',s=b,k=2;while(ps[s]||s==='blog'&&false||s==='admin')s=b+'-'+(k++);ps[s]=1;p.slug=s});var seen={};S.posts.forEach(function(p){var b=slug(p.slug||p.t)||'post',s=b,i=2;while(seen[s])s=b+'-'+(i++);seen[s]=1;p.slug=s});
 var bl=[],C=JSON.parse(JSON.stringify(S));walk(C,bl);var old=S;S=C;
 var js=await src('app-script','app.js'),css=await src('app-style','style.css');
-var routes=S.pages.map(function(p){return p.slug}).concat(S.posts.map(function(p){return 'blog/'+p.slug})),files=[];
+pq={};var routes=S.pages.map(function(p){return p.slug}).concat(S.posts.map(function(p){return 'blog/'+p.slug})),files=[];
 routes.forEach(function(r){files.push({path:r?r+'/index.html':'index.html',text:docHtml(r)})});
 files.push({path:'admin/index.html',text:docHtml('admin')},{path:'404.html',text:docHtml(null)},{path:'app.js',text:js},{path:'style.css',text:css});
 S.redirects.forEach(function(x){var f=String(x.from||'').toLowerCase().replace(/^https?:\/\/[^\/]+/,'').split('/').map(slug).filter(Boolean).join('/');if(!f||routes.indexOf(f)>-1||f==='admin'||!x.to)return;var to=String(x.to).trim(),a=/^http/.test(to)?to:S.domain.replace(/\/+$/,'')+'/'+to.replace(/^\/+|\/+$/g,'')+(to.replace(/^\/+|\/+$/g,'')?'/':'');
@@ -172,7 +228,6 @@ if(first){if(a.length<8){toast('Passcode kam se kam 8 akshar ka rakho');return}i
 else if(await hsh(a)!==S.adminHash){toast('Galat passcode');return}
 try{sessionStorage.jea_ok='1'}catch(e){}owner=true;o.remove();site(true)}}
 rt=getRoute();site();
-if(wantAdmin&&!owner){var ok=false;try{ok=sessionStorage.jea_ok==='1'&&!!S.adminHash}catch(e){}if(ok){owner=true;site(true)}else gate()}
+if(wantAdmin&&!owner){var ok=false;try{ok=sessionStorage.jea_ok==='1'&&!!S.adminHash}catch(e){}if(ok){owner=true;site(true)}}
 
 window.onpopstate=function(){rt=getRoute();site()};
-
