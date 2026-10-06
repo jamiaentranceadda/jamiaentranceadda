@@ -125,3 +125,8 @@ footer .soc a{border-color:rgba(255,255,255,.4);color:#fff}
 footer .si{border-color:rgba(255,255,255,.35);color:#fff}footer .si svg{color:#fff}
 .wa,.pl{display:inline-flex;align-items:center;gap:8px}
 .wa svg{width:22px;height:22px;color:#fff}
+
+.split{display:grid;gap:28px;grid-template-columns:1fr 1fr;align-items:center}
+.split.rev>img{order:-1}
+@media(max-width:760px){.split{grid-template-columns:1fr}.split.rev>img{order:0}}
+.stats .card{text-align:center}.big{font:800 38px Fraunces,Georgia,serif;color:var(--brand);line-height:1.1;margin-bottom:6px}
