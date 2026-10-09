@@ -251,3 +251,18 @@ section+section:before{content:"";position:absolute;left:8%;right:8%;top:0;heigh
 .rs img,.rs .av{width:40px;height:40px;border-radius:50%;object-fit:cover;flex:none}
 .rs .av{display:grid;place-items:center;background:var(--soft);font-weight:700;color:var(--brand)}
 @media(prefers-reduced-motion:reduce){.bd.hot{animation:none}}
+
+/*FOOT*/
+footer{background:color-mix(in srgb,var(--soft) 88%,#000);color:var(--text);border-top:1px solid var(--line);padding:52px 0 96px}
+.fg{display:grid;gap:34px;grid-template-columns:1.5fr repeat(4,1fr)}
+@media(max-width:1000px){.fg{grid-template-columns:1fr 1fr 1fr}.fg .fa{grid-column:1/-1}}
+@media(max-width:600px){.fg{grid-template-columns:1fr 1fr}}
+.fg .fa p{color:var(--mute);margin:12px 0 0;max-width:30em;font-size:15px}
+.fg h4{font:600 13.5px/1.2 Hind,system-ui,sans-serif;letter-spacing:.09em;text-transform:uppercase;color:var(--brand);margin:0 0 14px}
+.fg ul{list-style:none;padding:0;margin:0;display:grid;gap:10px;font-size:15px}
+.fg a{text-decoration:none;color:var(--mute);transition:color .2s,padding .2s}.fg a:hover{color:var(--brand)}
+.fg .fl:hover{padding-left:4px}
+.fg .fc li{color:var(--mute)}
+.fg .logo{color:var(--text)}.fg .logo img{height:34px;width:auto}
+footer .si{border-color:var(--line);color:var(--text)}footer .si svg{color:var(--c,var(--brand))}
+.fbot{border-top:1px solid var(--line);margin-top:34px;padding-top:18px;font-size:13.5px;color:var(--mute)}
