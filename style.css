@@ -1,4 +1,3 @@
-
 :root{--bg:#f6faf7;--soft:#e9f3ec;--card:#fff;--line:#d3e3d8;--text:#0e2318;--mute:#4f685a;--brand:#0f6b37;--brand2:#0a4d27;--ink:#fff;--gold:#c9962b;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a1610;--soft:#10231a;--card:#132a1e;--line:#254633;--text:#eef5f0;--mute:#9db8a7;--brand:#3ddc84;--brand2:#2bb869;--ink:#052013;--gold:#e0b04a}}
