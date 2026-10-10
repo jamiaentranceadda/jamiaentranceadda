@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
 Disallow: /admin/
+Disallow: /write/
 Sitemap: https://new.jamiaentranceadda.in/sitemap.xml
