@@ -343,3 +343,24 @@ footer{padding:48px 0 30px}
 @keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,.0),0 6px 18px rgba(0,0,0,.35)}50%{box-shadow:0 0 0 5px rgba(255,255,255,.14),0 6px 18px rgba(0,0,0,.35)}}
 .btn.adm{right:auto!important;left:14px}
 @media(prefers-reduced-motion:reduce){.btn.wa,.btn.pl{animation:none}}
+
+/*FIXFLOAT*/
+.btn.wa,.btn.pl,.btn.adm{position:fixed!important}
+.btn.wa{z-index:40}.btn.pl{z-index:40}.btn.adm{z-index:41}
+
+/*FIX2*/
+.btn.wa,.btn.pl,.btn.adm{position:fixed!important;z-index:40}
+.hbtn{display:none}
+.mmenu{display:none}
+@media(max-width:760px){
+.hh{flex-direction:row!important;align-items:center!important;justify-content:space-between;gap:12px;min-height:60px;padding-top:8px;padding-bottom:8px}
+.hh nav{display:none!important}
+.hh .logo{font-size:17px;white-space:normal;min-width:0;flex:1 1 auto}
+.hbtn{display:grid;place-items:center;width:46px;height:46px;border-radius:12px;border:1px solid var(--line);background:color-mix(in srgb,var(--card) 85%,transparent);color:var(--text);cursor:pointer;flex:none;margin-left:12px}
+.hbtn svg{width:26px;height:26px}
+.mmenu.on{display:grid;position:absolute;left:0;right:0;top:100%;background:color-mix(in srgb,var(--bg) 97%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);padding:8px 14px 18px;border-bottom:1px solid var(--line);box-shadow:0 22px 40px rgba(0,0,0,.4);gap:2px;max-height:calc(100vh - 70px);overflow:auto}
+.mmenu a{padding:14px 12px;border-radius:12px;color:var(--text);text-decoration:none;font-size:16.5px;border-bottom:1px solid color-mix(in srgb,var(--line) 60%,transparent)}
+.mmenu a.on{background:var(--brand);color:var(--ink);border-bottom-color:transparent}
+.mmenu a.lg{color:var(--brand);font-weight:600;border-bottom:0;margin-top:4px}
+}
+@media(min-width:761px){.mmenu,.hbtn{display:none!important}}
